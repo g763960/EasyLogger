@@ -29,7 +29,14 @@
 #ifndef __ELOG_H__
 #define __ELOG_H__
 
-#include <elog_cfg.h>
+#ifdef ELOG_USER_CFG
+#define ELOG_STR2(x) #x
+#define ELOG_STR(x) ELOG_STR2(x)
+#include ELOG_STR(ELOG_USER_CFG)
+#else
+#include "elog_cfg.h"
+#endif /* ELOG_USER_CFG */
+
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
