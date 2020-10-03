@@ -27,6 +27,8 @@
  */
 
 #include <elog.h>
+
+#ifndef ELOG_USER_UTILS
 #include <string.h>
 
 /**
@@ -38,17 +40,22 @@
  *
  * @return copied length
  */
-size_t elog_strcpy(size_t cur_len, char *dst, const char *src) {
+size_t elog_strcpy(size_t cur_len, size_t dst_len, char *dst, const char *src)
+{
     const char *src_old = src;
 
     assert(dst);
     assert(src);
 
-    while (*src != 0) {
+    while (*src != 0)
+    {
         /* make sure destination has enough space */
-        if (cur_len++ < ELOG_LINE_BUF_SIZE) {
+        if (cur_len++ < dst_len)
+        {
             *dst++ = *src++;
-        } else {
+        }
+        else
+        {
             break;
         }
     }
@@ -64,16 +71,19 @@ size_t elog_strcpy(size_t cur_len, char *dst, const char *src) {
  *
  * @return copy size
  */
-size_t elog_cpyln(char *line, const char *log, size_t len) {
+size_t elog_cpyln(char *line, const char *log, size_t len)
+{
     size_t newline_len = strlen(ELOG_NEWLINE_SIGN), copy_size = 0;
 
     assert(line);
     assert(log);
 
-    while (len--) {
+    while (len--)
+    {
         *line++ = *log++;
         copy_size++;
-        if (copy_size >= newline_len && !strncmp(log - newline_len, ELOG_NEWLINE_SIGN, newline_len)) {
+        if (copy_size >= newline_len && !strncmp(log - newline_len, ELOG_NEWLINE_SIGN, newline_len))
+        {
             break;
         }
     }
@@ -90,8 +100,9 @@ size_t elog_cpyln(char *line, const char *log, size_t len) {
  *
  * @return the address of destination memory
  */
-void *elog_memcpy(void *dst, const void *src, size_t count) {
-    char *tmp = (char *) dst, *s = (char *) src;
+void *elog_memcpy(void *dst, const void *src, size_t count)
+{
+    char *tmp = (char *)dst, *s = (char *)src;
 
     assert(dst);
     assert(src);
@@ -101,3 +112,4 @@ void *elog_memcpy(void *dst, const void *src, size_t count) {
 
     return dst;
 }
+#endif /* ELOG_USER_CFG */
