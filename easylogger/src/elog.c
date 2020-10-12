@@ -71,31 +71,31 @@
  * more information on https://en.wikipedia.org/wiki/ANSI_escape_code
  */
 #define CSI_START "\033["
-#define CSI_END "\033[0m"
+#define CSI_END   "\033[0m"
 /* output log front color */
-#define F_BLACK "30;"
-#define F_RED "31;"
-#define F_GREEN "32;"
-#define F_YELLOW "33;"
-#define F_BLUE "34;"
+#define F_BLACK   "30;"
+#define F_RED     "31;"
+#define F_GREEN   "32;"
+#define F_YELLOW  "33;"
+#define F_BLUE    "34;"
 #define F_MAGENTA "35;"
-#define F_CYAN "36;"
-#define F_WHITE "37;"
+#define F_CYAN    "36;"
+#define F_WHITE   "37;"
 /* output log background color */
 #define B_NULL
-#define B_BLACK "40;"
-#define B_RED "41;"
-#define B_GREEN "42;"
-#define B_YELLOW "43;"
-#define B_BLUE "44;"
+#define B_BLACK   "40;"
+#define B_RED     "41;"
+#define B_GREEN   "42;"
+#define B_YELLOW  "43;"
+#define B_BLUE    "44;"
 #define B_MAGENTA "45;"
-#define B_CYAN "46;"
-#define B_WHITE "47;"
+#define B_CYAN    "46;"
+#define B_WHITE   "47;"
 /* output log fonts style */
-#define S_BOLD "1m"
+#define S_BOLD      "1m"
 #define S_UNDERLINE "4m"
-#define S_BLINK "5m"
-#define S_NORMAL "22m"
+#define S_BLINK     "5m"
+#define S_NORMAL    "22m"
 /* output log default color definition: [front color] + [background color] + [show style] */
 #ifndef ELOG_COLOR_ASSERT
 #define ELOG_COLOR_ASSERT (F_MAGENTA B_NULL S_NORMAL)
@@ -122,9 +122,9 @@ static EasyLogger elog;
 /* every line log's buffer */
 static char log_buf[ELOG_LINE_BUF_SIZE] = {0};
 /* level output info */
-static const char *level_output_info[] = {
-    [ELOG_LVL_ASSERT] = "A/", [ELOG_LVL_ERROR] = "E/", [ELOG_LVL_WARN] = "W/",
-    [ELOG_LVL_INFO] = "I/",   [ELOG_LVL_DEBUG] = "D/", [ELOG_LVL_VERBOSE] = "V/",
+static const char *const level_output_info[] = {
+    [ELOG_LVL_ASSERT] = "ASSERT", [ELOG_LVL_ERROR] = "ERROR", [ELOG_LVL_WARN] = "WARN",
+    [ELOG_LVL_INFO] = "INFO",     [ELOG_LVL_DEBUG] = "DEBUG", [ELOG_LVL_VERBOSE] = "VERBOSE",
 };
 
 #ifdef ELOG_COLOR_ENABLE
@@ -588,38 +588,15 @@ void elog_output(uint8_t level, const char *tag, const char *file, const char *f
     }
 #endif
 
-    /* package level info */
-    if (get_fmt_enabled(level, ELOG_FMT_LVL))
-    {
-        log_len +=
-            elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, level_output_info[level]);
-    }
-    /* package tag info */
-    if (get_fmt_enabled(level, ELOG_FMT_TAG))
-    {
-        log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, tag);
-        /* if the tag length is less than 50% ELOG_FILTER_TAG_MAX_LEN, then fill space */
-        if (tag_len <= ELOG_FILTER_TAG_MAX_LEN / 2)
-        {
-            memset(tag_space, ' ', ELOG_FILTER_TAG_MAX_LEN / 2 - tag_len);
-            log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, tag_space);
-        }
-        log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, " ");
-    }
     /* package time, process and thread info */
     if (get_fmt_enabled(level, ELOG_FMT_TIME | ELOG_FMT_P_INFO | ELOG_FMT_T_INFO))
     {
-        log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, "[");
         /* package time info */
         if (get_fmt_enabled(level, ELOG_FMT_TIME))
         {
-            log_len +=
-                elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, elog_port_get_time());
-            if (get_fmt_enabled(level, ELOG_FMT_P_INFO | ELOG_FMT_T_INFO))
-            {
-                log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, " ");
-            }
+            log_len += sprintf(log_buf + log_len, "%s ", elog_port_get_time());
         }
+
         /* package process info */
         if (get_fmt_enabled(level, ELOG_FMT_P_INFO))
         {
@@ -636,41 +613,49 @@ void elog_output(uint8_t level, const char *tag, const char *file, const char *f
             log_len +=
                 elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, elog_port_get_t_info());
         }
-        log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, "] ");
+    }
+    /* package level info */
+    if (get_fmt_enabled(level, ELOG_FMT_LVL))
+    {
+        log_len += sprintf(log_buf + log_len, "[%7s] ", level_output_info[level]);
+    }
+    /* package tag info */
+    if (get_fmt_enabled(level, ELOG_FMT_TAG))
+    {
+        log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, tag);
+        /* if the tag length is less than 50% ELOG_FILTER_TAG_MAX_LEN, then fill space */
+        if (tag_len <= ELOG_FILTER_TAG_MAX_LEN / 2)
+        {
+            memset(tag_space, ' ', ELOG_FILTER_TAG_MAX_LEN / 2 - tag_len);
+            log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, tag_space);
+        }
+        log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, " ");
     }
     /* package file directory and name, function name and line number info */
     if (get_fmt_enabled(level, ELOG_FMT_DIR | ELOG_FMT_FUNC | ELOG_FMT_LINE))
     {
-        log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, "(");
         /* package time info */
         if (get_fmt_enabled(level, ELOG_FMT_DIR))
         {
-            log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, file);
-            if (get_fmt_enabled(level, ELOG_FMT_FUNC))
-            {
-                log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, " ");
-            }
-            else if (get_fmt_enabled(level, ELOG_FMT_LINE))
-            {
-                log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, ":");
-            }
+#ifdef __LINUX_HOST__
+            const char *file_mod = strrchr(file, '/') ? strrchr(file, '/') + 1 : file;
+#else
+            const char *file_mod = strrchr(file, '\\') ? strrchr(file, '\\') + 1 : file;
+#endif
+            log_len += sprintf(log_buf + log_len, "%s:", file_mod);
         }
         /* package process info */
         if (get_fmt_enabled(level, ELOG_FMT_FUNC))
         {
-            log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, func);
-            if (get_fmt_enabled(level, ELOG_FMT_LINE))
-            {
-                log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, ":");
-            }
+            log_len += sprintf(log_buf + log_len, "%s:", func);
         }
         /* package thread info */
         if (get_fmt_enabled(level, ELOG_FMT_LINE))
         {
-            snprintf(line_num, ELOG_LINE_NUM_MAX_LEN, "%ld", line);
-            log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, line_num);
+            log_len += sprintf(log_buf + log_len, "%ld:", line);
         }
-        log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, ")");
+
+        log_len += elog_strcpy(log_len, sizeof log_buf, log_buf + log_len, " ");
     }
     /* package other log data to buffer. '\0' must be added in the end by vsnprintf. */
     fmt_result = vsnprintf(log_buf + log_len, ELOG_LINE_BUF_SIZE - log_len, format, args);
