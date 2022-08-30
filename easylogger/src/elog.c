@@ -554,7 +554,7 @@ void elog_output(uint8_t level, const char *tag, const char *file, const char *f
     size_t tag_len = strlen(tag);
     size_t log_len = 0;
     size_t newline_len = strlen(ELOG_NEWLINE_SIGN);
-    char line_num[ELOG_LINE_NUM_MAX_LEN + 1] = {0};
+    //char line_num[ELOG_LINE_NUM_MAX_LEN + 1] = {0};
     char tag_space[ELOG_FILTER_TAG_MAX_LEN / 2 + 1] = {0};
     va_list args;
     int fmt_result;
